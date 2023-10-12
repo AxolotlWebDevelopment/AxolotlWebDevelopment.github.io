@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ragdoll Ball</title>
+  <link rel="icon" href="https://www.henrys-online.de/media/image/1b/88/1c/J06780-1.jpg" type="image/icon type">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+    #ball {
+      width: 50px;
+      height: 50px;
+      background-color: #3498db; /* Default color */
+      border-radius: 50%;
+      position: absolute;
+      left: 50%; /* Start in the center horizontally */
+      top: 50%; /* Start in the center vertically */
+      transform: translate(-50%, -50%); /* Center the ball */
+      transition: transform 0.3s;
+    }
+    #color-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #808080;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="ball"></div>
+    <button id="color-button">Toggle Color</button>
+  </div>
+
+  <script>
+    const ball = document.getElementById('ball');
+    const colorButton = document.getElementById('color-button');
+    let isDragging = false;
+    let gravity = 0.4;
+    let velocityX = 0;
+    let velocityY = 0;
+    let bounce = -0.7;
+    let mouseDownX = 0;
+    let mouseDownY = 0;
+    let currentColorIndex = 0;
+    const colors = ['blue', 'red', 'green', 'orange', 'purple','#3498db'];
+    const skins = ['default', 'basketball', 'volleyball'];
+    let currentSkinIndex = 0;
+    let rolling = false;
+
+    colorButton.addEventListener('click', () => {
+      // Cycle through colors
+      currentColorIndex = (currentColorIndex + 1) % colors.length;
+      const newColor = colors[currentColorIndex];
+      ball.style.backgroundColor = newColor;
+    });
+
+    function changeSkin(skin) {
+      // Apply the selected skin style
+      ball.style.backgroundImage = `url('${skin}.png')`;
+      ball.style.backgroundSize = 'cover';
+    }
+
+    ball.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      ball.style.transition = 'none';
+      ball.style.zIndex = '1';
+      mouseDownX = e.clientX;
+      mouseDownY = e.clientY;
+      velocityX = 0;
+      velocityY = 0;
+      rolling = false;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const x = e.clientX;
+        const y = e.clientY;
+        ball.style.left = x - ball.offsetWidth / 2 + 'px';
+        ball.style.top = y - ball.offsetHeight / 2 + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', (e) => {
+      if (isDragging) {
+        isDragging = false;
+        ball.style.transition = 'transform 0.3s ease-out';
+        ball.style.zIndex = '0';
+        let positionX = parseFloat(ball.style.left) || 0;
+        let positionY = parseFloat(ball.style.top) || 0;
+
+        // Calculate velocity based on mouse drag direction and speed
+        velocityX = (e.clientX - mouseDownX) * 0.05;
+        velocityY = (e.clientY - mouseDownY) * 0.05;
+
+        if (Math.abs(velocityX) < 0.2 && Math.abs(velocityY) < 0.2) {
+          rolling = true;
+        }
+
+        function update() {
+          if (rolling) {
+            const rotation = parseFloat(ball.style.transform.replace('rotate(', '').replace('deg)', '')) || 0;
+            ball.style.transform = `translate(-50%, -50%) rotate(${rotation + 5}deg)`;
+          } else {
+            velocityY += gravity;
+            positionX += velocityX;
+            positionY += velocityY;
+
+            if (positionX + ball.offsetWidth >= window.innerWidth || positionX <= 0) {
+              velocityX *= bounce;
+            }
+
+            if (positionY + ball.offsetHeight >= window.innerHeight || positionY <= 0) {
+              velocityY *= bounce;
+            }
+
+            ball.style.left = positionX + 'px';
+            ball.style.top = positionY + 'px';
+          }
+
+          if (positionY >= window.innerHeight - ball.offsetHeight && Math.abs(velocityY) < 1) {
+            cancelAnimationFrame(animation);
+          } else {
+            animation = requestAnimationFrame(update);
+          }
+        }
+
+        let animation = requestAnimationFrame(update);
+      }
+    });
+
+    // Function to change the ball's skin
+    function changeBallSkin() {
+      currentSkinIndex = (currentSkinIndex + 1) % skins.length;
+      const currentSkin = skins[currentSkinIndex];
+      changeSkin(currentSkin);
+    }
+
+    // Initially set the default skin
+    changeSkin(skins[currentSkinIndex]);
+  </script>
+</body>
+</html>
